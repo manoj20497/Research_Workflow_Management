@@ -1,0 +1,657 @@
+
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| manoj              |
+| mysql              |
+| performance_schema |
+| phpmyadmin         |
+| pitchbook          |
+| test               |
++--------------------+
+7 rows in set (0.00 sec)
+
+mysql> use pitchbook;
+Database changed
+mysql> show tables;
++---------------------+
+| Tables_in_pitchbook |
++---------------------+
+| new_data            |
++---------------------+
+1 row in set (0.00 sec)
+
+
+1. Structure of Data
+
+mysql> describe new_data;
++-------------------------------+---------+------+-----+---------+-------+
+| Field                         | Type    | Null | Key | Default | Extra |
++-------------------------------+---------+------+-----+---------+-------+
+| Profile                       | text    | YES  |     | NULL    |       |
+| Created Date                  | text    | YES  |     | NULL    |       |
+| Secondary Completed Date      | text    | YES  |     | NULL    |       |
+| Close Date                    | text    | YES  |     | NULL    |       |
+| Most Recent Unassign Reason   | text    | YES  |     | NULL    |       |
+| Secondary Researcher          | text    | YES  |     | NULL    |       |
+| Researcher Hire Date          | text    | YES  |     | NULL    |       |
+| Research Group                | text    | YES  |     | NULL    |       |
+| Time taken to Complete (secs) | int(11) | YES  |     | NULL    |       |
+| Benchmark Points              | int(11) | YES  |     | NULL    |       |
+| Workflow Type                 | text    | YES  |     | NULL    |       |
+| Workflow Process              | text    | YES  |     | NULL    |       |
+| Workflow Status               | text    | YES  |     | NULL    |       |
+| Workflow Priority             | text    | YES  |     | NULL    |       |
+| Workflow Region               | text    | YES  |     | NULL    |       |
++-------------------------------+---------+------+-----+---------+-------+
+15 rows in set (0.00 sec)
+
+
+2. Check for total rows
+
+mysql> select count(*) as `Total Rows` from new_data;
++------------+
+| Total Rows |
++------------+
+|      56931 |
++------------+
+1 row in set (0.04 sec)
+
+
+3. Changing column names as per convenience
+
+mysql> alter table new_data
+    -> change column profile profile varchar(30),
+    -> change column created_date created_date datetime,
+    -> change column `secondary completed date` second_comp_date datetime,
+    -> change column `close date` close_date datetime,
+    -> change column `most recent unassign reason` reason varchar(30),
+    -> change column `secondary researcher` second_research varchar(30),
+    -> change column `researcher hire date` researcher_hire_date datetime,
+    -> change column `research group` research_group varchar(30),
+    -> change column `time taken to complete (secs)` time_in_sec int,
+    -> change column `Benchmark points` benchmark_points int,
+    -> change column workflow_type workflow_type varchar(30),
+    -> change column `workflow process` workflow_process varchar(30),
+    -> change column `workflow status` workflow_status varchar(30),
+    -> change column `workflow priority` workflow_priority varchar(30),
+    -> change column `workflow region` workflow_region varchar(30);
+Query OK, 56931 rows affected, 65535 warnings (0.81 sec)
+Records: 56931  Duplicates: 0  Warnings: 228672
+
+
+4. Viewing sample of data
+
+mysql> select * from new_data
+    -> limit 5;
++-----------------+---------------------+---------------------+---------------------+--------+-----------------+----------------------+--------------------------------+-------------+------------------+------------------------+------------------+-----------------+-------------------+-----------------+
+| profile         | created_date        | second_comp_date    | close_date          | reason | second_research | researcher_hire_date | research_group                 | time_in_sec | benchmark_points | workflow_type          | workflow_process | workflow_status | workflow_priority | workflow_region |
++-----------------+---------------------+---------------------+---------------------+--------+-----------------+----------------------+--------------------------------+-------------+------------------+------------------------+------------------+-----------------+-------------------+-----------------+
+| ProfileID 1     | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 |        | Researcher 1    | 0000-00-00 00:00:00  | SEA - VC - NC/NR - Bronze Shel |        2455 |               57 | Co VC - New Company    | Post News        | Pend QA         |                   | Greater China   |
+| ProfileID 10    | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 |        | Researcher 10   | 0000-00-00 00:00:00  | MUM - M&A - NC                 |         557 |               10 | Co M&A - Exit Check-in | Check In         | Closed          | Regular           | Europe          |
+| ProfileID 100   | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 |        | Researcher 84   | 0000-00-00 00:00:00  | MUM - F - SEC                  |         943 |               10 | Fund PE - Regular Fund | Check In         | Closed          | High              | North America   |
+| ProfileID 1000  | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 |        | Researcher 18   | 0000-00-00 00:00:00  | KOL - VC - NR                  |        1908 |               45 | Co VC - New Round      | News             | Pend Survey     | High              | North America   |
+| ProfileID 10000 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 | 0000-00-00 00:00:00 |        | Researcher 164  | 0000-00-00 00:00:00  | MUM - D - NC/NR                |        3477 |               47 | Co Debt - New Company  | Secondary        | Closed          |                   | Europe          |
++-----------------+---------------------+---------------------+---------------------+--------+-----------------+----------------------+--------------------------------+-------------+------------------+------------------------+------------------+-----------------+-------------------+-----------------+
+5 rows in set (0.00 sec)
+
+
+
+5. Average time taken (in sec) to complete the workflow 
+
+mysql> select avg(time_in_sec) as `Average Time Taken to Complete the Workflow` 
+    -> from new_data;
+
++---------------------------------------------+
+| Average Time Taken to Complete the Workflow |
++---------------------------------------------+
+|                                   2036.4969 |
++---------------------------------------------+
+1 row in set (0.06 sec)
+
+
+6. Distribution of Workflow Type
+
+mysql> select workflow_type, count(workflow_type) as `Workflow Count`
+    -> from new_data
+    -> group by workflow_type
+    -> order by count(workflow_type) desc;
++------------------------------------------+----------------+
+| workflow_type                            | Workflow Count |
++------------------------------------------+----------------+
+| Co VC - Regular Company                  |          12472 |
+| Co VC - New Round                        |           5867 |
+| Co PE - Regular Company                  |           3383 |
+| Co M&A - New Company                     |           3072 |
+| Co Private - New Company                 |           2998 |
+| Limited Partner - Regular LP             |           2146 |
+| Co VC - New Company                      |           1937 |
+| Co PE - New Round                        |           1360 |
+| Inv VC - Regular Investor                |           1348 |
+| Co Debt - New Round                      |           1342 |
+| Inv CDev - Regular Investor              |           1248 |
+| Co PE - New Company                      |           1237 |
+| Fund VC - Regular Fund                   |            881 |
+| Co Early Stage - New Company             |            831 |
+| Co M&A - New Round                       |            828 |
+| Inv PE - Regular Investor                |            822 |
+| Co M&A - Investment Close                |            769 |
+| Co VC - Investment Close                 |            734 |
+| Co Debt - SBA New Company                |            705 |
+| SP - Regular SP                          |            704 |
+| Inv VC - New Investor                    |            643 |
+| Inv CDev -New Investor                   |            635 |
+| Fund PE - Regular Fund                   |            620 |
+| Fund Other - Regular Fund                |            582 |
+| Co Early Stage - Regular Company         |            563 |
+| Co Early Stage - New Round               |            550 |
+| Co M&A - Exit Check-in                   |            522 |
+| Co M&A - Regular Company                 |            517 |
+| SP - New SP                              |            480 |
+| Co PE - Investment Close                 |            438 |
+| Co Public - New Round                    |            386 |
+| Co Public - Investment Close             |            351 |
+| Co PF - Regular Company                  |            299 |
+| Fund HF - New Fund                       |            285 |
+| Debt Provider - Regular DP               |            267 |
+| Fund VC - New Fund                       |            266 |
+| Co Private - Regular Company             |            264 |
+| Limited Partner - New LP                 |            252 |
+| Co Early Stage - New Round - OOB Crawler |            251 |
+| Co PF - New Company                      |            239 |
+| Limited Partner - IP - Update IP         |            232 |
+| Fund PE - New Fund                       |            228 |
+| Inv PE - New Investor                    |            224 |
+| Co Early Stage - Investment Close        |            214 |
+| Inv RA - Regular Investor                |            212 |
+| Fund RA - Regular Fund                   |            205 |
+| Fund Other - New Fund                    |            200 |
+| Inv Other - Regular Investor             |            185 |
+| Co Public - New Company                  |            173 |
+| Fund HF - Regular Fund                   |            172 |
+| Limited Partner - Returns                |            171 |
+| Inv HF - Regular Investor                |            160 |
+| Co Debt - New Company                    |            153 |
+| Inv HF - New Investor                    |            145 |
+| Inv Other - New Investor                 |            137 |
+| Co VC - New Round - OOB Crawler          |            117 |
+| Co Public - Regular Company              |            111 |
+| Fund RA - New Fund                       |            103 |
+| Co Debt - Regular Company                |             88 |
+| Co PF - Private Financials               |             83 |
+| Inv RA - New Investor                    |             72 |
+| Inv Acc/Inc - Regular Investor           |             66 |
+| Fund Acc/Inc - Regular Fund              |             63 |
+| Fund Debt - Regular Fund                 |             58 |
+| Debt Provider - New DP                   |             40 |
+| Inv Angel - Regular Investor             |             30 |
+| Inv Returns                              |             28 |
+| MGMT - General                           |             27 |
+| Inv Angel - New Investor                 |             25 |
+| Fund VC - Fund Close                     |             22 |
+| Fund Debt - New Fund                     |             17 |
+| Inv Acc/Inc - New Investor               |             17 |
+| Fund PE - Fund Close                     |             12 |
+| Co Private - New Round                   |             11 |
+| Inv Returns â?? Existing                 |             10 |
+| Fund RA - Fund Close                     |              9 |
+| Fund Acc/Inc - New Fund                  |              6 |
+| Fund Other - Fund Close                  |              6 |
+| Fund Debt - Fund Close                   |              3 |
+| Limited Partner - IP - New IP            |              1 |
+| Fund HF - Fund Close                     |              1 |
++------------------------------------------+----------------+
+81 rows in set (0.22 sec)
+
+
+
+7. Which researcher has the highest no. of profiles assigned?
+
+mysql> SELECT Second_Research, COUNT(*) AS ProfileCount
+    -> FROM new_data
+    -> GROUP BY Second_Research
+    -> ORDER BY ProfileCount DESC
+    -> LIMIT 3;
++-----------------+--------------+
+| Second_Research | ProfileCount |
++-----------------+--------------+
+| Researcher 92   |          657 |
+| Researcher 45   |          618 |
+| Researcher 63   |          603 |
++-----------------+--------------+
+3 rows in set (0.16 sec)
+
+
+8.  Average Benchmark points and Sum of Benchmark points for each Workflow
+
+mysql> select workflow_type as `Workflow Type`,
+    -> sum(benchmark_points) As `Sum of Benchmark Points`,
+    -> Avg(benchmark_points) As `Average Benchmark Points`
+    -> from new_data
+    -> group by workflow_type
+    -> order by avg(benchmark_points) desc;
++------------------------------------------+-------------------------+--------------------------+
+| Workflow Type                            | Sum of Benchmark Points | Average Benchmark Points |
++------------------------------------------+-------------------------+--------------------------+
+| Inv Acc/Inc - New Investor               |                     995 |                  58.5294 |
+| Co Early Stage - New Company             |                   48542 |                  58.4140 |
+| Co VC - New Company                      |                  103696 |                  53.5343 |
+| Inv PE - Regular Investor                |                   43748 |                  53.2214 |
+| Co PE - New Company                      |                   64236 |                  51.9289 |
+| Co Debt - New Company                    |                    7674 |                  50.1569 |
+| Co M&A - New Company                     |                  148891 |                  48.4671 |
+| SP - New SP                              |                   22461 |                  46.7938 |
+| Inv VC - Regular Investor                |                   62654 |                  46.4792 |
+| Co M&A - New Round                       |                   37220 |                  44.9517 |
+| Co PE - New Round                        |                   60990 |                  44.8456 |
+| Co Early Stage - New Round               |                   24290 |                  44.1636 |
+| Inv VC - New Investor                    |                   27722 |                  43.1135 |
+| Debt Provider - New DP                   |                    1712 |                  42.8000 |
+| Inv HF - New Investor                    |                    6137 |                  42.3241 |
+| Co VC - New Round                        |                  247100 |                  42.1169 |
+| Inv RA - New Investor                    |                    3027 |                  42.0417 |
+| Inv PE - New Investor                    |                    9375 |                  41.8527 |
+| Limited Partner - New LP                 |                   10222 |                  40.5635 |
+| Inv Acc/Inc - Regular Investor           |                    2543 |                  38.5303 |
+| Co Private - New Round                   |                     399 |                  36.2727 |
+| Co Early Stage - Regular Company         |                   19900 |                  35.3464 |
+| Inv CDev -New Investor                   |                   21829 |                  34.3764 |
+| Co PE - Regular Company                  |                  115100 |                  34.0231 |
+| Inv CDev - Regular Investor              |                   41934 |                  33.6010 |
+| Inv HF - Regular Investor                |                    5318 |                  33.2375 |
+| Co VC - Regular Company                  |                  407580 |                  32.6796 |
+| Co M&A - Regular Company                 |                   16854 |                  32.5996 |
+| Debt Provider - Regular DP               |                    8652 |                  32.4045 |
+| Co Debt - New Round                      |                   42119 |                  31.3852 |
+| Inv Returns                              |                     850 |                  30.3571 |
+| Fund Debt - Fund Close                   |                      90 |                  30.0000 |
+| Inv Angel - Regular Investor             |                     891 |                  29.7000 |
+| Co Debt - Regular Company                |                    2500 |                  28.4091 |
+| Fund Debt - Regular Fund                 |                    1640 |                  28.2759 |
+| Co Private - New Company                 |                   82538 |                  27.5310 |
+| Co VC - New Round - OOB Crawler          |                    3200 |                  27.3504 |
+| MGMT - General                           |                     727 |                  26.9259 |
+| Inv RA - Regular Investor                |                    5632 |                  26.5660 |
+| Fund Debt - New Fund                     |                     450 |                  26.4706 |
+| Co Debt - SBA New Company                |                   18201 |                  25.8170 |
+| Co Early Stage - New Round - OOB Crawler |                    6439 |                  25.6534 |
+| Co Private - Regular Company             |                    6635 |                  25.1326 |
+| Inv Returns â?? Existing                 |                     240 |                  24.0000 |
+| Co Public - New Company                  |                    4151 |                  23.9942 |
+| Co Public - New Round                    |                    9092 |                  23.5544 |
+| SP - Regular SP                          |                   15551 |                  22.0895 |
+| Co Public - Regular Company              |                    2429 |                  21.8829 |
+| Limited Partner - Regular LP             |                   45739 |                  21.3136 |
+| Inv Other - Regular Investor             |                    3936 |                  21.2757 |
+| Limited Partner - Returns                |                    3575 |                  20.9064 |
+| Limited Partner - IP - New IP            |                      20 |                  20.0000 |
+| Inv Other - New Investor                 |                    2739 |                  19.9927 |
+| Inv Angel - New Investor                 |                     441 |                  17.6400 |
+| Co PE - Investment Close                 |                    7377 |                  16.8425 |
+| Limited Partner - IP - Update IP         |                    3894 |                  16.7845 |
+| Co M&A - Investment Close                |                   12412 |                  16.1404 |
+| Co VC - Investment Close                 |                   11454 |                  15.6049 |
+| Co Early Stage - Investment Close        |                    3279 |                  15.3224 |
+| Fund VC - New Fund                       |                    3112 |                  11.6992 |
+| Fund Acc/Inc - New Fund                  |                      70 |                  11.6667 |
+| Co M&A - Exit Check-in                   |                    5552 |                  10.6360 |
+| Fund PE - New Fund                       |                    2402 |                  10.5351 |
+| Fund Other - New Fund                    |                    2092 |                  10.4600 |
+| Fund RA - New Fund                       |                    1076 |                  10.4466 |
+| Fund HF - New Fund                       |                    2901 |                  10.1789 |
+| Fund VC - Regular Fund                   |                    8928 |                  10.1339 |
+| Fund PE - Regular Fund                   |                    6260 |                  10.0968 |
+| Fund VC - Fund Close                     |                     222 |                  10.0909 |
+| Co Public - Investment Close             |                    3540 |                  10.0855 |
+| Fund Other - Regular Fund                |                    5851 |                  10.0533 |
+| Fund Acc/Inc - Regular Fund              |                     632 |                  10.0317 |
+| Fund RA - Regular Fund                   |                    2055 |                  10.0244 |
+| Fund PE - Fund Close                     |                     120 |                  10.0000 |
+| Fund RA - Fund Close                     |                      90 |                  10.0000 |
+| Fund Other - Fund Close                  |                      60 |                  10.0000 |
+| Fund HF - Fund Close                     |                      10 |                  10.0000 |
+| Fund HF - Regular Fund                   |                    1720 |                  10.0000 |
+| Co PF - Private Financials               |                      10 |                   0.1205 |
+| Co PF - Regular Company                  |                       0 |                   0.0000 |
+| Co PF - New Company                      |                       0 |                   0.0000 |
++------------------------------------------+-------------------------+--------------------------+
+81 rows in set (0.27 sec)
+
+
+9. Different types of Workflow Status
+
+mysql> select distinct(Workflow_status) as `Types of Workflow Status` from new_data;
++--------------------------+
+| Types of Workflow Status |
++--------------------------+
+| Pend QA                  |
+| Closed                   |
+| Pend Survey              |
+| Pend Primary             |
+| Pend Deletion            |
+| Pend Correction          |
+| Pend Secondary           |
++--------------------------+
+7 rows in set (0.09 sec)
+
+
+10. Total Pending profiles in the workflow
+
+mysql> select count(*) As `Pending Profiles` from new_data
+    -> where workflow_status in ("Pend QA","Pend Survey", "Pend Primary", "Pend Deletion", "Pend Correction", "Pend Secondary");
++------------------+
+| Pending Profiles |
++------------------+
+|            25637 |
++------------------+
+1 row in set (0.05 sec)
+
+
+11. Average time taken to complete the workflow in different regions
+
+mysql> select workflow_region As `Workflow Region`,
+    -> Avg(time_in_sec) as `Avg Time taken to complete the Workflow`
+    -> from new_data
+    -> group by workflow_region
+    -> order by avg(time_in_sec) desc;
++-------------------+-----------------------------------------+
+| Workflow Region   | Avg Time taken to complete the Workflow |
++-------------------+-----------------------------------------+
+| Greater China     |                               2626.1848 |
+| Asia              |                               2438.0038 |
+| South America     |                               2217.3313 |
+| Australia/Pacific |                               2158.7495 |
+| India             |                               2141.5543 |
+| Middle East       |                               2130.3638 |
+| Israel            |                               2088.7205 |
+| Africa            |                               2054.9405 |
+| North America     |                               2027.4237 |
+|                   |                               1973.9261 |
+| Europe            |                               1918.0670 |
++-------------------+-----------------------------------------+
+11 rows in set (0.20 sec)
+
+
+12. How many profiles are closed per reseracher (Top 10)
+
+mysql> select second_research as `Secondary Researcher`,
+    -> count(*) as `Total Profiles Closed`
+    -> from new_data
+    -> where workflow_status = "Closed"
+    -> group by second_research
+    -> order by count(*) desc
+    -> limit 10;
++----------------------+-----------------------+
+| Secondary Researcher | Total Profiles Closed |
++----------------------+-----------------------+
+| Researcher 45        |                   616 |
+| Researcher 69        |                   509 |
+| Researcher 136       |                   454 |
+| Researcher 201       |                   443 |
+| Researcher 92        |                   412 |
+| Researcher 139       |                   411 |
+| Researcher 63        |                   408 |
+| Researcher 120       |                   386 |
+| Researcher 150       |                   368 |
+| Researcher 112       |                   362 |
++----------------------+-----------------------+
+10 rows in set (0.12 sec)
+
+
+13. Which workflow process has the highest priority on average
+
+SELECT Workflow_Status, COUNT(*) AS WorkflowCount
+FROM new_data
+GROUP BY Workflow_status;
+
+
+14. What is the total benchmark points each research group have?
+
+mysql> select research_group as `Research Group`, sum(benchmark_points) As `Sum of Benchmark Points` 
+    -> from new_data
+    -> group by research_group;
++--------------------------------+-------------------------+
+| Research Group                 | Sum of Benchmark Points |
++--------------------------------+-------------------------+
+| KOL - CD - SEC                 |                   16241 |
+| KOL - ES - NC                  |                   50833 |
+| KOL - ES - NR                  |                   25242 |
+| KOL - INV - SEC                |                   46705 |
+| KOL - VC - CL                  |                  157549 |
+| KOL - VC - NR                  |                   11870 |
+| MUM - CD - SEC                 |                   37543 |
+| MUM - CD - SEC - Training      |                   15025 |
+| MUM - D - NC/NR                |                   69111 |
+| MUM - DP - SEC                 |                    5775 |
+| MUM - ES - NR                  |                    9737 |
+| MUM - F - OCR                  |                    2680 |
+| MUM - F - SEC                  |                   41646 |
+| MUM - I1 - S                   |                   30686 |
+| MUM - I2 - S                   |                   11996 |
+| MUM - INV - SEC                |                   72685 |
+| MUM - INV - SEC - Training     |                   16517 |
+| MUM - IPO - NR                 |                   16416 |
+| MUM - LP - SEC                 |                   49122 |
+| MUM - LP - SEC - Training      |                    3669 |
+| MUM - M&A - ECI                |                   15656 |
+| MUM - M&A - IC/ECI             |                   29799 |
+| MUM - M&A - NC                 |                   88492 |
+| MUM - M&A - NC - Training      |                   19613 |
+| MUM - M&A - NR                 |                   55564 |
+| MUM - P - CL - All Datasets    |                   75021 |
+| MUM - PC - ALL - Swing         |                   89550 |
+| MUM - PE - CL                  |                  113075 |
+| MUM - PE - IC/CL               |                    7812 |
+| MUM - PE - NC                  |                   22368 |
+| MUM - PE - NC - Training       |                    9253 |
+| MUM - PE - NR/CL - Swing       |                   86789 |
+| MUM - PF                       |                       0 |
+| MUM - PF (2)                   |                   35125 |
+| MUM - PF (3)                   |                    7095 |
+| MUM - PF (4)                   |                   27080 |
+| MUM - PPL - SEC                |                     727 |
+| MUM - SP - SEC                 |                   32640 |
+| MUM - SP/D1 - S                |                    4738 |
+| MUM - SP1 - S                  |                    6734 |
+| MUM - SSO - DHI                |                    1581 |
+| MUM - VC - CL                  |                   68611 |
+| MUM - VC - NC                  |                   43015 |
+| MUM - VC - NC - Training       |                    8402 |
+| MUM - VC - NR                  |                  302865 |
+| MUM - VC - QA                  |                   16131 |
+| SEA - F - Bronze Shell Swing   |                     479 |
+| SEA - FR - S & OCR             |                     120 |
+| SEA - I - Bronze Shell Swing   |                    5119 |
+| SEA - P - S                    |                    4093 |
+| SEA - VC - NC/NR - Bronze Shel |                   42742 |
+| SEA - VC Bronze Shell New Hire |                    4281 |
+| Z(old) P6 IPO                  |                      20 |
+| Z(old) P6 M&A                  |                     107 |
++--------------------------------+-------------------------+
+54 rows in set (0.16 sec)
+
+
+15. What is the average time taken to complete the workflow by each research group?
+
+mysql> select research_group As `Research Group`, avg(time_in_sec) as `Average Time taken (secs)`
+    -> from new_data
+    -> group by research_group;
++--------------------------------+---------------------------+
+| Research Group                 | Average Time taken (secs) |
++--------------------------------+---------------------------+
+| KOL - CD - SEC                 |                 2079.2233 |
+| KOL - ES - NC                  |                 2241.4023 |
+| KOL - ES - NR                  |                 1764.8350 |
+| KOL - INV - SEC                |                 2836.0969 |
+| KOL - VC - CL                  |                 1696.0354 |
+| KOL - VC - NR                  |                 2284.7552 |
+| MUM - CD - SEC                 |                 2841.3923 |
+| MUM - CD - SEC - Training      |                 2479.6574 |
+| MUM - D - NC/NR                |                 1698.8875 |
+| MUM - DP - SEC                 |                 5582.6790 |
+| MUM - ES - NR                  |                  891.5612 |
+| MUM - F - OCR                  |                 1888.0222 |
+| MUM - F - SEC                  |                  965.9800 |
+| MUM - I1 - S                   |                 2301.2541 |
+| MUM - I2 - S                   |                 1813.0274 |
+| MUM - INV - SEC                |                 3141.1635 |
+| MUM - INV - SEC - Training     |                 5479.4983 |
+| MUM - IPO - NR                 |                 1371.7030 |
+| MUM - LP - SEC                 |                 1676.9748 |
+| MUM - LP - SEC - Training      |                 2905.6532 |
+| MUM - M&A - ECI                |                 1054.5867 |
+| MUM - M&A - IC/ECI             |                 1646.5220 |
+| MUM - M&A - NC                 |                 1874.0693 |
+| MUM - M&A - NC - Training      |                 4436.6824 |
+| MUM - M&A - NR                 |                 2255.7895 |
+| MUM - P - CL - All Datasets    |                 1060.2925 |
+| MUM - PC - ALL - Swing         |                 2188.2733 |
+| MUM - PE - CL                  |                 2648.1265 |
+| MUM - PE - IC/CL               |                 1280.9284 |
+| MUM - PE - NC                  |                 3509.9336 |
+| MUM - PE - NC - Training       |                 7639.6878 |
+| MUM - PE - NR/CL - Swing       |                 2359.6864 |
+| MUM - PF                       |                 3558.3043 |
+| MUM - PF (2)                   |                 1127.5072 |
+| MUM - PF (3)                   |                  759.5274 |
+| MUM - PF (4)                   |                  764.5359 |
+| MUM - PPL - SEC                |                 5573.7778 |
+| MUM - SP - SEC                 |                 3066.5663 |
+| MUM - SP/D1 - S                |                 3084.7222 |
+| MUM - SP1 - S                  |                 2484.0669 |
+| MUM - SSO - DHI                |                 3043.1250 |
+| MUM - VC - CL                  |                 1634.6155 |
+| MUM - VC - NC                  |                 3734.7605 |
+| MUM - VC - NC - Training       |                 9427.0769 |
+| MUM - VC - NR                  |                 1945.6652 |
+| MUM - VC - QA                  |                 1665.0935 |
+| SEA - F - Bronze Shell Swing   |                 1654.3000 |
+| SEA - FR - S & OCR             |                  654.8333 |
+| SEA - I - Bronze Shell Swing   |                 1818.6396 |
+| SEA - P - S                    |                 1121.2562 |
+| SEA - VC - NC/NR - Bronze Shel |                 2690.2238 |
+| SEA - VC Bronze Shell New Hire |                 7164.1010 |
+| Z(old) P6 IPO                  |                  767.0000 |
+| Z(old) P6 M&A                  |                 2665.5000 |
++--------------------------------+---------------------------+
+54 rows in set (0.14 sec)
+
+
+16. How many research groups are there in each workflow region
+
+mysql> select workflow_region As `Workflow Region`, count(research_group) as No. of Research Group
+    -> from new_data
+    -> group by workflow_region
+    -> order by count(research_group) desc;
++-------------------+-----------------------+
+| Workflow Region   | No. of Research Group |
++-------------------+-----------------------+
+| North America     |                 27857 |
+| Europe            |                 18264 |
+| India             |                  2174 |
+| Australia/Pacific |                  2084 |
+| Asia              |                  1860 |
+| Greater China     |                  1629 |
+| South America     |                   815 |
+| Israel            |                   730 |
+| Middle East       |                   591 |
+| Africa            |                   521 |
+|                   |                   406 |
++-------------------+-----------------------+
+11 rows in set (0.16 sec)
+
+
+17. Checking Min, Max and Average values of Numerical data
+
+mysql> select avg(time_in_sec), min(time_in_sec), max(time_in_sec),
+    -> avg(benchmark_points), min(benchmark_points), max(benchmark_points)
+    -> from new_data;
++------------------+------------------+------------------+-----------------------+-----------------------+-----------------------+
+| avg(time_in_sec) | min(time_in_sec) | max(time_in_sec) | avg(benchmark_points) | min(benchmark_points) | max(benchmark_points) |
++------------------+------------------+------------------+-----------------------+-----------------------+-----------------------+
+|        2036.4969 |                0 |           614163 |               33.6503 |                     0 |                   631 |
++------------------+------------------+------------------+-----------------------+-----------------------+-----------------------+
+1 row in set (0.06 sec)
+
+
+
+18. Efficiency of research groups which has less than average time taken and greater than average benchmark points
+
+mysql> select research_group, time_in_sec, benchmark_points from new_data
+    -> group by research_group
+    -> having benchmark_points > 33.65
+    -> and time_in_sec < avg(time_in_sec);
++--------------------------------+-------------+------------------+
+| research_group                 | time_in_sec | benchmark_points |
++--------------------------------+-------------+------------------+
+| KOL - ES - NC                  |        1101 |               57 |
+| KOL - VC - NR                  |        1908 |               45 |
+| MUM - CD - SEC                 |        1751 |               35 |
+| MUM - CD - SEC - Training      |        1769 |               37 |
+| MUM - DP - SEC                 |        3223 |               52 |
+| MUM - I1 - S                   |         530 |               40 |
+| MUM - INV - SEC - Training     |        2290 |               34 |
+| MUM - M&A - NC - Training      |        3964 |               55 |
+| MUM - M&A - NR                 |        1281 |               45 |
+| MUM - P - CL - All Datasets    |         933 |               50 |
+| MUM - PE - NC                  |        2356 |               52 |
+| MUM - PE - NR/CL - Swing       |        1477 |               35 |
+| MUM - VC - NC                  |        2985 |               57 |
+| MUM - VC - NC - Training       |        6521 |               47 |
+| SEA - I - Bronze Shell Swing   |        1216 |               35 |
+| SEA - VC - NC/NR - Bronze Shel |        2455 |               57 |
+| SEA - VC Bronze Shell New Hire |        3522 |               45 |
++--------------------------------+-------------+------------------+
+17 rows in set (0.23 sec)
+
+
+19. Check workflow status and its frequency
+
+mysql> select workflow_status, count(workflow_status) as Frequency
+    -> from new_data
+    -> group by workflow_status
+    -> order by count(workflow_status);
++-----------------+------------------------+
+| workflow_status |        Frequency       |
++-----------------+------------------------+
+| Pend Secondary  |                      1 |
+| Pend Deletion   |                     83 |
+| Pend Correction |                    162 |
+| Pend QA         |                   2297 |
+| Pend Primary    |                   7524 |
+| Pend Survey     |                  15570 |
+| Closed          |                  31294 |
++-----------------+------------------------+
+7 rows in set (0.13 sec)
+
+
+20. What is the average time taken and average benchmark points by each workflow region?
+
+mysql> select workflow_region As `Workflow Region`,
+    -> avg(time_in_sec) as `Average Time taken (secs)`,
+    -> avg(benchmark_points) as `Avergae Benchmark Points`
+    -> from new_data
+    -> group by workflow_region;
++-------------------+---------------------------+--------------------------+
+| Workflow Region   | Average Time taken (secs) | Avergae Benchmark Points |
++-------------------+---------------------------+--------------------------+
+|                   |                 1973.9261 |                  27.6232 |
+| Africa            |                 2054.9405 |                  35.2418 |
+| Asia              |                 2438.0038 |                  36.6317 |
+| Australia/Pacific |                 2158.7495 |                  36.2001 |
+| Europe            |                 1918.0670 |                  32.9576 |
+| Greater China     |                 2626.1848 |                  40.9073 |
+| India             |                 2141.5543 |                  35.6481 |
+| Israel            |                 2088.7205 |                  33.8370 |
+| Middle East       |                 2130.3638 |                  35.1438 |
+| North America     |                 2027.4237 |                  33.0436 |
+| South America     |                 2217.3313 |                  37.4871 |
++-------------------+---------------------------+--------------------------+
+11 rows in set (0.21 sec)
+
+
+
+
